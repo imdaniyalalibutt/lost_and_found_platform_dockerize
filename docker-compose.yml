@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/docker-app
+    environment:
+      - DATABASE_URL=sqlite:///./app/db.sqlite3
+    depends_on:
+      - db
+      - migrate  # Ensure migrations are run before starting the app
+
+  db:
+    image: nouchka/sqlite3
+    volumes:
+      - db_data:/var/lib/sqlite3
+    environment:
+      - SQLITE_DATABASE=db.sqlite3
+      - SQLITE_DATABASE_PATH=/var/lib/sqlite3
+
+  migrate:
+    image: python:3.9
+    volumes:
+      - .:/docker-app
+    working_dir: /docker-app
+    command: ["sh", "-c", "pip install -r requirements.txt && alembic upgrade head"]
+
+volumes:
+  db_data:
